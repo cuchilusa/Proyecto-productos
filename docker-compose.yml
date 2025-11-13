@@ -1,0 +1,58 @@
+# Versión del formato de archivo de Docker Compose que estás usando.
+# Versión del lenguaje YAML que Docker Compose entiende
+version: '3.8'
+services:
+  app-php:
+   # Construye una imagen personalizada usando el Dockerfile que está en este mismo directorio (.)
+    build: .
+    ports:
+      - "8083:80"
+    environment:
+      DB_HOST: ${DB_HOST}
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASS: ${DB_PASS}
+    depends_on:
+      - db
+    volumes:
+      - ./src:/var/www/html
+  db:
+    image: mysql:8.0
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    # Mapeamos /var/lib/mysql que es el directorio donde MySQL guarda sus datos reales
+    # todas las bases de datos, tablas, índices,...a un volumen persistente (db_data) en nuestro
+    # ordenador, porque si eliminamos el contenedor se pierde la base de datos y todo.
+    
+    # Esta línea monta una carpeta local (./docker/mysql) en el directorio especial del contenedor MySQL. Este directorio es reconocido automáticamente por la imagen oficial de MySQL.
+    # Durante el primer arranque del contenedor (cuando la base de datos todavía no existe),
+    # el script de arranque de MySQL busca archivos .sql, .sql.gz, o .sh dentro de esa carpeta y los ejecuta en orden alfabético.
+    # Cuando el contenedor se inicia por primera vez, este script se ejecuta automáticamente y crea la base de datos y las tablas iniciales.
+    # El script init.sql solo se ejecuta la primera vez que se crea el volumen de datos de MySQL.
+    # Esto se debe a que la imagen oficial de MySQL marca internamente el directorio de datos como inicializado (se crea /var/lib/mysql/mysql).
+    
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./docker/mysql:/docker-entrypoint-initdb.d    
+
+    ports:
+      - "3306:3306"
+  phpmyadmin:
+    image: phpmyadmin:latest
+    restart: always
+    depends_on:
+      - db
+    environment:
+      PMA_HOST: ${PMA_HOST}
+      PMA_USER: ${PMA_USER}
+      PMA_PASSWORD: ${PMA_PASSWORD}
+    ports:
+      - "${PHPMYADMIN_PORT}:80"
+# Un volume (volumen) en Docker es un espacio de almacenamiento persistente que vive fuera del ciclo de vida del contenedor.
+# Aunque elimines el contenedor, los datos guardados en un volume siguen ahí.
+volumes:
+  db_data:
