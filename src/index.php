@@ -27,6 +27,7 @@ foreach ($resultados as $producto){
   echo "<td>{$producto['Nombre']}</td>";
   echo "<td>{$producto['Precio']}</td>";
   echo "<td>{$producto['Stock']}</td>";
+  echo "<td><img src='". $producto['imagen'] ."' alt='" . $producto['Nombre'] ."' width='100'>";
  
   echo "<td>";
   echo "<a href='editar.php?id={$producto['id']}'class='btn btn-sm btn-warning'>✏️ Editar</a>"; 
